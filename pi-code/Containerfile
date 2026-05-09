@@ -1,0 +1,27 @@
+FROM debian:stable-slim
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y --no-install-recommends bash curl jq vim ca-certificates &&\
+    rm -rf /var/lib/apt/lists/*
+
+RUN curl -L https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -o /usr/local/bin/yq && \
+    chmod +x /usr/local/bin/yq
+
+# add non-root "piuser"
+RUN useradd -m -u 1000 piuser
+USER piuser
+ENV PATH="/home/piuser/.local/bin:${PATH}"
+WORKDIR /home/piuser
+
+# Install pi agent from latest release (full package)
+RUN export DOWNLOAD_URL=$(curl -s https://api.github.com/repos/earendil-works/pi/releases/latest | jq -r '.assets[] | select(.name == "pi-linux-x64.tar.gz") | .browser_download_url') && \
+    curl -L "${DOWNLOAD_URL}" -o /tmp/pi.tgz && \
+    mkdir -p ~/.pi && \
+    tar -xzf /tmp/pi.tgz -C ~/.pi --strip-components=1 && \
+    mkdir -p ~/.local/bin && \
+    ln -s ~/.pi/pi ~/.local/bin/pi && \
+    rm -rf /tmp/pi.tgz
+
+# Entrypoint for the pi agent
+ENTRYPOINT ["pi"]

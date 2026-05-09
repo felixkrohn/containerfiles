@@ -1,0 +1,13 @@
+FROM docker.io/library/alpine:3.23
+RUN apk add --no-cache bash curl git nodejs npm python3 pnpm \
+    && addgroup -S opencode && adduser -u 1000 -h /home/opencode -S opencode -G opencode \
+    && mkdir -p /home/opencode && chown -R 1000:1000 /home/opencode
+
+USER 1000
+env HOME /home/opencode
+env TERM xterm-256color
+WORKDIR /home/opencode
+
+RUN mkdir -p /home/opencode/.config/opencode/ && curl -fsSL https://opencode.ai/install | bash -s -- --version 1.14.41
+COPY opencode.json /home/opencode/.config/opencode/
+ENTRYPOINT ["/home/opencode/.opencode/bin/opencode"]
