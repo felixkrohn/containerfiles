@@ -18,15 +18,16 @@ pi-code() {
     else
         target_dir="$PWD"
     fi
-    
+
     # Convert to absolute path
     target_dir=$(realpath "$target_dir")
-    
+
     # Run podman with appropriate mounts for rootless operation
     podman run --rm -it \
         -v "$target_dir:$target_dir:z" \
-        -v "$HOME/.pi/agent:$HOME/.pi/agent:z" \
+        -v "$HOME/.pi/agent:/home/piuser/.pi/agent:rw,z" \
         -w "$target_dir" \
+        --userns=keep-id \
         localhost/pi-code:latest \
-        pi "$@"
+        "$@"
 }
