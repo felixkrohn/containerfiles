@@ -1,18 +1,21 @@
 # pi-code Container with Buildah/Podman Support
-Fedora-based container using the upstream buildah container pattern as a foundation. Provides:
+Fedora-based container using the upstream buildah/podman container pattern as a foundation. Provides:
 
-- **buildah & podman**: Full container building and orchestration capabilities
-- **Rootless operation**: Proper user namespace configuration for running containers from within the pi agent
+- **buildah & podman**: Full container building and orchestration capabilities  
+- **Nested container support**: Run containers inside this container (requires `--privileged`)
 - **Dynamic environment support**: Can spin up Python, Node.js, Rust, Go, or any other language runtime on-demand via ephemeral containers
+
+**Note:** Nested podman/buildah operations require running the pi-code container with `--privileged`. See upstream documentation:
+https://github.com/containers/image_build/blob/main/podman/README.md
 
 **Build:**
 ```bash
-podman build -t localhost/pi-code-buildah:latest -f Containerfile-pi-buildah .
+podman build -t localhost/pi-code-buildah:latest -f Containerfile .
 ```
 
 ## How It Works
 
-The pi agent runs as a non-root user (UID 1000) inside an ephemeral container. With the enhanced `Containerfile-pi-buildah`, it can now:
+The pi agent runs as a non-root user (UID 1000) inside an ephemeral container. With this image, it can now:
 
 1. **Pull runtime images** from any OCI registry (`podman pull python:3.12-slim`)
 2. **Execute code in isolated environments** (`podman run --rm -v $(pwd):/work:z ...`)
@@ -51,27 +54,26 @@ The `skills/container-orchestration/SKILL.md` file documents how the pi agent ca
 ### Step 1: Build the Enhanced Container
 
 ```bash
-podman build -t localhost/pi-code-buildah:latest -f Containerfile-pi-buildah .
+podman build -t localhost/pi-code-buildah:latest -f Containerfile .
 ```
 
 ### Step 2: Run the pi Agent
 
 Also see `pi-code.inc.sh` for an alias function that you can use in your .bashrc/.zshrc to invoke pi using podman.
 
+**Important:** To enable nested container operations (podman inside podman), run with `--privileged`:
 
 ```bash
-# Interactive mode
+# Interactive mode without nested containers
 podman run --rm -it \
   -v $(pwd):/work:z \
   localhost/pi-code-buildah:latest
 
-# With arguments  
+# With nested container support (required for podman build/run inside)
 podman run --rm -it \
   -v /path/to/project:/project:z \
   -w /project \
-  --security-opt label=disable \
-  --device /dev/fuse:rw \
-  --userns=keep-id \
+  --privileged \
   localhost/pi-code-buildah:latest "explain this codebase"
 ```
 
@@ -87,6 +89,6 @@ buildah version
 # Pull a runtime image
 podman pull python:3.12-slim
 
-# Run code in ephemeral container
+# Run code in ephemeral container (requires parent to be run with --privileged)
 podman run --rm -v $(pwd):/work:z python:3.12-slim python -c "print('Hello from Python!')"
 ```
