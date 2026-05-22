@@ -1,33 +1,27 @@
-# Pi-code agent container function
-# Usage: pi-code [directory] [pi-agent-args...]
+# Pi-code agent container launcher
+# Usage: pi-code [directory] [--] [pi-agent-args...]
 # Examples:
 #   pi-code                    # Work on current directory
-#   pi-code /path/to/project   # Work on specific directory
-#   pi-code . "explain this"   # Work on current directory and pass args to pi
+#   pi-code /path/to/project   # Work on specific directory  
+#   pi-code . "explain this"   # Pass arguments to pi agent
+
 pi-code() {
-    # Determine target directory (first arg or $PWD)
-    local target_dir
-    if [ $# -gt 0 ]; then
-        # Check if first argument is a directory (not a flag)
-        if [[ "$1" != --* ]] && [[ "$1" != -* ]]; then
-            target_dir="$1"
-            shift  # Remove first argument from "$@"
-        else
-            target_dir="$PWD"
-        fi
-    else
+    local target_dir="${1:-$PWD}"
+    
+    if [[ "$target_dir" == "--" ]]; then
+        shift && target_dir="$PWD"
+    elif [[ ! -d "$target_dir" ]]; then
         target_dir="$PWD"
     fi
-
-    # Convert to absolute path
-    target_dir=$(realpath "$target_dir")
-
-    # Run podman with appropriate mounts for rootless operation
+    
     podman run --rm -it \
-        -v "$target_dir:$target_dir:z" \
+        -v "${target_dir}:${target_dir}:z" \
         -v "$HOME/.pi/agent:/home/piuser/.pi/agent:rw,z" \
-        -w "$target_dir" \
+        -w "$(realpath "$target_dir")" \
+        --net=host \
+        --security-opt label=disable \
+        --device /dev/fuse:rw \
         --userns=keep-id \
-        localhost/pi-code:latest \
-        "$@"
+        localhost/pi-code-buildah:latest \
+        "${@}"
 }
