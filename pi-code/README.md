@@ -1,3 +1,17 @@
+# TL;DR
+- build the container image locally using the containerfile: `buildah bud --layers -t localhost/pi-code-buildah:latest Containerfile`
+- copy pi-code.inc.sh into your $HOME/.bashrc.d/ directory: `cp pi-code.inc.sh $HOME/.bashrc.d/*`
+- reload bash: `exec bash`
+- (if you use a different shell, you will probably know what to do)
+- start pi with `pi-code` (or adapt the shell function if you want a different name)
+- the wrapper will automatically mount the directory you're currently in into the container at the same path, and use it as working directory.
+- it will also mount your ~/.pi directory, but not your complete home - if a LLM goes havoc your files not mounted into the container are safe.
+- ~/bin/ will also be mounted into the container and is added to $PATH - if you have static binaries in your ~/bin pi can use them in the container as well (kubectl, krew, or whatever)
+- if you start pi-code in your /home/<username> the wrapper will automatically switch to /home/<username>/git in order to preserve your home
+- Ctrl+d or ESC-ESC will quit pi as well as the container
+- copy the skill file into your pi config dir to use it: `cp -r ./container-orchestration/ ~/.pi/agent/skills/`. It will tell pi and your model how to use podman/buildah within the container to use third-party tools, libraries or whatever in a container (within the pi container)
+
+
 # pi-code Container with Buildah/Podman Support
 Fedora-based container using the upstream buildah/podman container pattern as a foundation. Provides:
 
@@ -51,7 +65,7 @@ The `skills/container-orchestration/SKILL.md` file documents how the pi agent ca
 
 ## Building and Using
 
-### Step 1: Build the Enhanced Container
+### Step 1: Build the Container image
 
 ```bash
 podman build -t localhost/pi-code-buildah:latest -f Containerfile .

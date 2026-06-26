@@ -13,7 +13,7 @@ RUN echo -e "\n\n# Added during image build" >> /etc/dnf/dnf.conf && \
     echo -e "minrate=100\ntimeout=60\n" >> /etc/dnf/dnf.conf
 
 # Install base dependencies: buildah/podman for container orchestration + OCI runtime (crun)
-ARG INSTALL_RPMS="buildah fuse-overlayfs cpp git-core podman docker-cli jq vim-minimal ca-certificates dirmngr gnupg2 crun"
+ARG INSTALL_RPMS="buildah fuse-overlayfs cpp git-core podman docker-cli jq vim-minimal ca-certificates dirmngr gnupg2 crun lynx yamllint tree"
 
 RUN dnf -y makecache && \
     dnf -y update && \
@@ -69,12 +69,12 @@ RUN mkdir -p /var/lib/shared/overlay-images \
     touch /var/lib/shared/vfs-layers/layers.lock
 
 # Create piuser with proper UID/GID ranges for rootless containers
-RUN useradd -m -u 1000 piuser && \
+RUN useradd -m -u 1000 -G root piuser && \
     echo -e "root:1:65535\npiuser:1:999\npiuser:1001:64535" > /etc/subuid && \
     echo -e "root:1:65535\npiuser:1:999\npiuser:1001:64535" > /etc/subgid
 
 USER piuser
-ENV PATH="/home/piuser/.local/bin:${PATH}"
+ENV PATH="/home/piuser/.local/bin:/home/piuser/bin:${PATH}"
 WORKDIR /home/piuser
 
 RUN mkdir -p /home/piuser/.local/bin && curl -L https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -o /home/piuser/.local/bin/yq && \
