@@ -13,7 +13,7 @@ RUN echo -e "\n\n# Added during image build" >> /etc/dnf/dnf.conf && \
     echo -e "minrate=100\ntimeout=60\n" >> /etc/dnf/dnf.conf
 
 # Install base dependencies: buildah/podman for container orchestration + OCI runtime (crun)
-ARG INSTALL_RPMS="buildah fuse-overlayfs cpp git-core podman docker-cli jq vim-minimal ca-certificates dirmngr gnupg2 crun lynx yamllint tree"
+ARG INSTALL_RPMS="buildah fuse-overlayfs cpp git-core podman docker-cli jq vim-minimal ca-certificates dirmngr gnupg2 crun lynx which yamllint tree"
 
 RUN dnf -y makecache && \
     dnf -y update && \
