@@ -67,6 +67,7 @@ EOF
         -v "$HOME/.pi/agent:/home/piuser/.pi/agent:rw,z" \
         $extra_flags \
         -w "$(realpath "$target_dir")" \
+        -e TERM=xterm-256color \
         --privileged \
 	--userns=keep-id:uid=1000,gid=1000 \
         localhost/pi-code-buildah:latest \
